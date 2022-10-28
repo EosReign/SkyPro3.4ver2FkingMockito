@@ -1,7 +1,9 @@
 package com.example.skypro34ver2fkingmockito;
 
 
+import com.example.skypro34ver2fkingmockito.exception.EmployeeNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -13,68 +15,102 @@ import com.example.skypro34ver2fkingmockito.model.Employee;
 import com.example.skypro34ver2fkingmockito.service.DepartmentService;
 import com.example.skypro34ver2fkingmockito.service.EmployeeService;
 
-import java.util.Arrays;
+
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
+import static com.example.skypro34ver2fkingmockito.TestConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 import static org.mockito.Mockito.when;
 
 
 @ExtendWith(MockitoExtension.class)
 public class DepartmentServiceTest {
-    @InjectMocks
-    private DepartmentService departmentService;
 
     @Mock
-    private EmployeeService employeeService;
+    EmployeeService employeeService;
+    @InjectMocks
+    DepartmentService departmentService;
+
 
     @BeforeEach
     public void beforeEach() {
         when(employeeService.getAll()).thenReturn(
-                Arrays.asList(
-                        new Employee("Ivan", "Petrove", 2, 10000),
-                        new Employee("Oleg", "Krot", 2, 30000),
-                        new Employee("Alina", "Pavlin", 2, 20000),
-                        new Employee("Olga", "Perin", 3, 40000),
-                        new Employee("Leila", "Mannaya", 3, 50000)
+                List.of(
+                        employee1, employee2, employee3, employee4,
+                        employee5DoubleName, employee5DoubleSurname
                 )
         );
     }
 
     @ParameterizedTest
-    @MethodSource("getMaxDepartmentSalaryTestParams")
-    public void getMaxDepartmentSalaryTest(int department,
-                                          Employee expected) {
-        assertThat(departmentService.getMaxDepartmentSalary(department)).isEqualTo(expected);
+    @MethodSource("employeeWithMaxSalary")
+    public void shouldReturnEmployeeWithMaxSalary(int department,
+                                                  Employee expected) {
+        assertThat(departmentService.findEmployeeWithMaxSalaryFromDepartment(department)).isEqualTo(expected);
     }
 
     @ParameterizedTest
-    @MethodSource("getMinDepartmentSalaryTestParams")
-    public void getMinDepartmentSalaryTest(int department,
-                                           Employee expected) {
-        assertThat(departmentService.getMinDepartmentSalary(department)).isEqualTo(expected);
+    @MethodSource("employeeWithMinSalary")
+    public void shouldReturnEmployeeWithMinSalary(int department,
+                                                  Employee expected) {
+        assertThat(departmentService.findEmployeeWithMinSalaryFromDepartment(department)).isEqualTo(expected);
     }
 
-    public static Stream<Arguments> getMaxDepartmentSalaryTestParams() {
+    @Test
+    public void methodFindEmployeeWithMinSalaryShouldReturnEmployeeNotFoundException() {
+        assertThatExceptionOfType(EmployeeNotFoundException.class)
+                .isThrownBy(() -> departmentService.findEmployeeWithMinSalaryFromDepartment(5));
+    }
+
+    @Test
+    public void methodFindEmployeeWithMaxSalaryShouldReturnEmployeeNotFoundException() {
+        assertThatExceptionOfType(EmployeeNotFoundException.class)
+                .isThrownBy(() -> departmentService.findEmployeeWithMaxSalaryFromDepartment(5));
+    }
+
+    @ParameterizedTest
+    @MethodSource("employeesFromDepartment")
+    public void shouldReturnAllEmployeesFromDepartment(int department,
+                                                       List<Employee> expected) {
+        assertThat(departmentService.findEmployeesFromDepartment(department)).containsExactlyInAnyOrderElementsOf(expected);
+    }
+
+    @Test
+    public void shouldReturnAllEmployeesFromDepartment() {
+        assertThat(departmentService.sortEmployeesByDepartment())
+                .containsExactlyInAnyOrderEntriesOf(
+                        Map.of(
+                                1, List.of(employee1, employee2, employee3),
+                                2, List.of(employee4, employee5DoubleSurname),
+                                3, List.of(employee5DoubleName)
+                        ));
+    }
+
+    public static Stream<Arguments> employeeWithMaxSalary() {
         return Stream.of(
-                Arguments.of(2, new Employee("Ivan", "Petrove", 2, 10000)),
-                Arguments.of(2, new Employee("Oleg", "Krot", 2, 30000))
+                Arguments.of(1, employee2),
+                Arguments.of(2, employee5DoubleSurname),
+                Arguments.of(3, employee5DoubleName)
         );
     }
 
-    public static Stream<Arguments> getMinDepartmentSalaryTest() {
+    public static Stream<Arguments> employeeWithMinSalary() {
         return Stream.of(
-                Arguments.of(2, new Employee("Ivan", "Petrove", 2, 10000)),
-                Arguments.of(2, new Employee("Oleg", "Krot", 2, 30000))
+                Arguments.of(1, employee1),
+                Arguments.of(2, employee4),
+                Arguments.of(3, employee5DoubleName)
         );
     }
-// нахер этот ебучий мохито, задолбался я уже. Срань какая-то. я уже неделю эту домашку пытаюсь сделать, а всё равно срань получается.
-    
 
-
-
-
-
-
+    public static Stream<Arguments> employeesFromDepartment() {
+        return Stream.of(
+                Arguments.of(1, List.of(employee1, employee2, employee3)),
+                Arguments.of(2, List.of(employee4, employee5DoubleSurname)),
+                Arguments.of(3, List.of(employee5DoubleName))
+        );
+    }
 
 }

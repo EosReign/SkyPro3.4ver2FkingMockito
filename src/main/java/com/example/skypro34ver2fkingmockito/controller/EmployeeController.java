@@ -1,38 +1,77 @@
 package com.example.skypro34ver2fkingmockito.controller;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import com.example.skypro34ver2fkingmockito.exception.EmployeeAlreadyAddException;
+import com.example.skypro34ver2fkingmockito.exception.EmployeeNotFoundException;
+import com.example.skypro34ver2fkingmockito.exception.EmployeeStorageIsFullException;
+import com.example.skypro34ver2fkingmockito.model.Employee;
+import org.springframework.web.bind.annotation.*;
 import com.example.skypro34ver2fkingmockito.service.EmployeeService;
 
+import java.util.List;
+
 @RestController
-@RequestMapping(path = "/employee")
+@RequestMapping("/employee")
 public class EmployeeController {
-    public final EmployeeService employeeService;
+
+    private final EmployeeService employeeService;
+
+
     public EmployeeController(EmployeeService employeeService) {
         this.employeeService = employeeService;
     }
 
-    @GetMapping(path = "add")
-    public String add(@RequestParam("name") String name,
-                      @RequestParam("surname") String surname,
-                      @RequestParam("department") int department) {
-        return employeeService.employeeAdd(name, surname, department).toString() + " добавлен в список";
+    @GetMapping()
+    public String showWelcome() {
+        return "Welcome!";
     }
 
-    @GetMapping(path = "find")
-    public String find(@RequestParam("name") String name,
-                       @RequestParam("surname") String surname,
-                       @RequestParam("department") int department) {
-        return employeeService.employeeFind(name, surname, department).getIndex() + " индекс сотрудника";
+    @GetMapping("/add")
+    public Employee addEmployee(@RequestParam("firstName") String name,
+                                @RequestParam("lastName") String surname,
+                                @RequestParam int salary,
+                                @RequestParam int departmentId){
+        return employeeService.addEmployee(name, surname,salary,departmentId);
     }
 
-
-    @GetMapping(path = "remove")
-    public String remove(@RequestParam("name") String name,
-                         @RequestParam("surname") String surname,
-                         @RequestParam("department") int department) {
-        return employeeService.employeeRemove(name, surname, department).toString() + " удален из списка";
+    @GetMapping("/remove")
+    public Employee removeEmployee(@RequestParam("firstName") String name,
+                                   @RequestParam("lastName") String surname,
+                                   @RequestParam int salary,
+                                   @RequestParam int departmentId){
+        return employeeService.removeEmployee(name, surname,salary,departmentId);
     }
+
+    @GetMapping("/find")
+    public Employee findEmployee(@RequestParam("firstName") String name,
+                                 @RequestParam("lastName") String surname,
+                                 @RequestParam int salary,
+                                 @RequestParam int departmentId){
+        return employeeService.findEmployee(name, surname,salary,departmentId);
+    }
+
+    @GetMapping("/size")
+    public int getSize(){
+        return EmployeeService.getSize();
+    }
+
+    @GetMapping("/showEmployees")
+    public List<Employee> showEmployees(){
+        return employeeService.getAll();
+    }
+
+    @ExceptionHandler
+    public String handleEmployeeNotFoundException(EmployeeNotFoundException e){
+        return "Employee not found.";
+    }
+
+    @ExceptionHandler
+    public String handleEmployeeAlreadyAddException(EmployeeAlreadyAddException e){
+        return "Employee already added.";
+    }
+
+    @ExceptionHandler
+    public String handleEmployeeStorageIsFullException(EmployeeStorageIsFullException e){
+        return "Employee storage is full.Вы не можете добавить сотрудника.";
+    }
+
 }
